@@ -9,6 +9,7 @@ library(lubridate)
 library(tigris)
 library(DT)
 COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
+# save zip code polygon as a file
 # char_zips <- zctas(cb = TRUE, starts_with = c("90","91","92"))
 # saveRDS(char_zips, "char_zips.rds")
 # Our reference
@@ -60,7 +61,8 @@ server <- function(input, output) {
 # 1.show the selected neighborhood AND zipcode only by input$zipcode and input$neighborhood
 # 2.show a pop-up when the mouse hover over a zipcode, 
 #     with information: zipcode, risk score, cummulative cases, population.
-# 3. add search location bar on the right of zoom -/+ buttons. See London map.
+# 3. add search location bar on the right of zoom -/+ buttons. See London map (need leaflet API functionality)
+# 4. add search zipcode bar on the right of 3., the map will zoom in to the user-typed in input$zip
 
     output$map = renderLeaflet({
         char_zips <- readRDS("char_zips.rds")
