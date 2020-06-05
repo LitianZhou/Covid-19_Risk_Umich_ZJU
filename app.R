@@ -8,7 +8,9 @@ library(plotly)
 library(lubridate)
 library(tigris)
 library(DT)
+library(readxl)
 COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
+zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.csv")
 # char_zips <- zctas(cb = TRUE, starts_with = c("90","91","92"))
 # saveRDS(char_zips, "char_zips.rds")
 # Our reference
@@ -23,9 +25,9 @@ ui <- fluidPage(
                  leafletOutput("map",width = "100%", height = 700),
                  
                  # to-dos: see London map
-                 # 1. adjust the text position to the middle
+                 # 1. adjust the text position to the middle(align to the middle)
                  # 2. add a risk scale at the top
-                 # 3. let user able to wrap up the filter
+                 # 3. let user able to wrap up the filter ()
                  # 4. change neighborhood input to zipcode input
                  absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
                                draggable = TRUE, top = "120", left = "70", 
@@ -112,8 +114,12 @@ server <- function(input, output) {
                 theme_classic()
         )
     })
+    
+    # choose columns to display
+    zipcode_daily2 <- zipcode_daily %>% select(ZIP:places)
+    
     output$rawData = DT::renderDataTable({
-        COVID19_by_Neighborhood
+        zipcode_daily2
     })
 }
 
