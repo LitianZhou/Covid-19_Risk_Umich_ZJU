@@ -10,11 +10,8 @@ library(tigris)
 library(DT)
 library(readxl)
 COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
-<<<<<<< HEAD
-# save zip code polygon as a file
-=======
 zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.csv")
->>>>>>> 313e5bbe9f48c50382d4d6a34a8d6a1ac59d5e42
+
 # char_zips <- zctas(cb = TRUE, starts_with = c("90","91","92"))
 # saveRDS(char_zips, "char_zips.rds")
 # Our reference

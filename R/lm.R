@@ -15,10 +15,10 @@ zip_daily = zip_daily %>% group_by(ZIP) %>%
     last = dplyr::last(date)
   )
 
-ggplot2::ggplot(data = zip_daily, aes(x=first))+geom_bar()
-ggplot2::ggplot(data = zip_daily, aes(x=last))+geom_bar()
+#ggplot2::ggplot(data = zip_daily, aes(x=first))+geom_bar()
+#ggplot2::ggplot(data = zip_daily, aes(x=last))+geom_bar()
 
-ggplot2::ggplot(data = zip_daily, aes(x=date,y=confirmed_cases, color=ZIP))+geom_line()
+#ggplot2::ggplot(data = zip_daily, aes(x=date,y=confirmed_cases, color=ZIP))+geom_line()
 
 # making new income dummy features
 zip_daily$low_income = 0
@@ -66,7 +66,7 @@ zip_daily_scaled1 = as.data.frame(zip_daily_scaled1[,-1])
 set.seed(7) # set for reproducibility
 train.control = trainControl(method = "cv", number = 10) # 10-fold cross validation
 lm.model1 = train(data = zip_daily_scaled1, 
-                  new_cases_adjusted_by_pop ~.-new_confirmed_cases,
+                  new_confirmed_cases ~.-new_cases_adjusted_by_pop,
                   method = "leapSeq",
                   tuneGrid = data.frame(nvmax = 5:15),
                   trControl = train.control
@@ -115,8 +115,8 @@ zip_daily2$ave_new8_11after = apply(zip_daily2[,31:34],1,mean)
 
 # predict 6-9
 zip_daily_scaled2 = scale(zip_daily2[,sapply(zip_daily2, is.numeric)])
-zip_daily_scaled2[,29] = zip_daily2$ave_new6_9after
-zip_daily_scaled2 = as.data.frame(zip_daily_scaled2[,c(-1,-22:-28,-30)])
+zip_daily_scaled2[,28] = zip_daily2$ave_new6_9after
+zip_daily_scaled2 = as.data.frame(zip_daily_scaled2[,c(-1,-22:-27,-29,-30)])
 
 set.seed(7) # set for reproducibility
 train.control = trainControl(method = "cv", number = 10) # 10-fold cross validation
@@ -129,7 +129,7 @@ lm.model2 = train(data = zip_daily_scaled2,
 
 ## model2 performace
 lm.model2$bestTune
-lm.model2$results # MSE 3.377, R-sq 6.26
+lm.model2$results # MSE 3.314, R-sq 6.26
 model2.coef = data.frame(coef = coef(lm.model2$finalModel,14),
                          features = names(coef(lm.model2$finalModel,14)))
 #summary(lm.model1$finalModel)
