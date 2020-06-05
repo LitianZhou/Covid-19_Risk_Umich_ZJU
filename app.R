@@ -9,6 +9,7 @@ library(lubridate)
 library(tigris)
 library(DT)
 library(readxl)
+library(shinyWidgets)
 COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
 zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.csv")
 # char_zips <- zctas(cb = TRUE, starts_with = c("90","91","92"))
@@ -16,11 +17,11 @@ zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.cs
 # Our reference
 # 1. London map:https://www.doorda.com/covid-19-data-free-download/#1589463968147-d5954274-124c
 # 2. SuperZip map:https://shiny.rstudio.com/gallery/superzip-example.html
-
 ui <- fluidPage(
-    titlePanel("Covid-19 Risk Umich + ZJU"),
+    titlePanel(h1("Covid-19 Risk Umich + ZJU",align="center")),
     tabsetPanel(
         tabPanel("Interactive map",
+                 HTML("<button type='button' class='btn btn-danger' data-toggle='collapse' data-target='#demo'>Filter</button>"),
                  textOutput("select_stat"),
                  leafletOutput("map",width = "100%", height = 700),
                  
@@ -29,33 +30,55 @@ ui <- fluidPage(
                  # 2. add a risk scale at the top
                  # 3. let user able to wrap up the filter ()
                  # 4. change neighborhood input to zipcode input
-                 absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
-                               draggable = TRUE, top = "120", left = "70", 
-                               right = "auto", bottom = "auto",
-                               width = "330", height = "500",
-                               
-                               h3("filter"),
-                               
-                               selectInput("statistic",
-                                           "You are interested in...",
-                                           c("exposure risk", "public mobility", "death rate","infectious rate"),
-                                           selected = "exposure risk"),
-                               selectInput("neighborhood",
-                                           "locate at ...",
-                                           unique(COVID19_by_Neighborhood$COMTY_NAME),
-                                           multiple = T),
-                               plotly::plotlyOutput("hist", height = 200)
+                 div(id = "demo", class = "collapse in", 
+                   absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
+                                 draggable = TRUE, top = "120", left = "auto", 
+                                 right = "auto", bottom = "auto",
+                                 width = "330", height = "500",
+                                 
+                                 #HTML('<button data-toggle="collapse" data-target="#demo">-</button>'),
+                                          
+                                 h3("filter", align = "center"),
+                                 selectInput("statistic",
+                                             "You are interested in...",
+                                             c("exposure risk", "public mobility", "death rate","infectious rate"),
+                                             selected = "exposure risk"),align="center",
+                                 selectInput("neighborhood",
+                                             "locate at ...",
+                                             unique(COVID19_by_Neighborhood$COMTY_NAME),
+                                             multiple = T),
+                                 searchInput(
+                                   inputId = "zipcode",
+                                   label = "Enter the zipcode you want to search for :",
+                                   placeholder = "This is a placeholder",
+                                   btnSearch = icon("search"),
+                                   btnReset = icon("remove"),
+                                   width = "100%"
+                                 ),
+                                 textOutput(outputId = "res"),
+                                 plotly::plotlyOutput("line", height = 200)
+                   )
                  )
         ),
+                  
         tabPanel("Raw data table",
                  DT::dataTableOutput("rawData")
         )
     )
 )
 
+
 server <- function(input, output) {
     options(tigris_use_cache = TRUE)
     output$select_stat = renderText(paste("So you want to know",input$statistic))
+    
+    #search from the dataframe to get new confirmed case
+    
+    output$res <- renderText({
+      result <- zipcode_daily %>% subset(ZIP == input$zipcode , select=c(new_confirmed_cases))
+      paste("new confirmed cases", result)
+    })
+    
     
     # the map is made from here:
     # to-dos: 
@@ -107,10 +130,12 @@ server <- function(input, output) {
                       position = "bottomright")
 
     })
-    output$hist = renderPlotly({
+    
+    #create a temp table with 
+    output$line = renderPlotly({
         ggplotly(
-            ggplot2::ggplot(data = COVID19_by_Neighborhood)+
-                geom_histogram(aes(x=cases), binwidth=30) +
+            ggplot2::ggplot(data = zipcode_daily)+
+                geom_line(aes(x=date, y=new_confirmed_cases)) +
                 theme_classic()
         )
     })
