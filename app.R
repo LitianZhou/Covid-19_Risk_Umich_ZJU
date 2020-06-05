@@ -54,9 +54,9 @@ server <- function(input, output) {
         
         labels <- paste0(
                 "Zip Code: ",
-                char_zips@data$GEOID10, "<br/>",
+                char_zips$GEOID10, "<br/>",
                 "Case Count: ",
-                char_zips@data$RiskScore) %>%
+                char_zips$RiskScore) %>%
             lapply(htmltools::HTML)
         
         char_zips %>% 
