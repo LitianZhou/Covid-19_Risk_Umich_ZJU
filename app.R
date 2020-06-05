@@ -7,38 +7,61 @@ library(ggplot2)
 library(plotly)
 library(lubridate)
 library(tigris)
+library(DT)
 COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
 # char_zips <- zctas(cb = TRUE, starts_with = c("90","91","92"))
 # saveRDS(char_zips, "char_zips.rds")
+# Our reference
+# 1. London map:https://www.doorda.com/covid-19-data-free-download/#1589463968147-d5954274-124c
+# 2. SuperZip map:https://shiny.rstudio.com/gallery/superzip-example.html
 
 ui <- fluidPage(
     titlePanel("Covid-19 Risk Umich + ZJU"),
-    tabPanel("Interactive map",
-             div(class="outer",
+    tabsetPanel(
+        tabPanel("Interactive map",
                  textOutput("select_stat"),
                  leafletOutput("map",width = "100%", height = 700),
+                 
+                 # to-dos: see London map
+                 # 1. adjust the text position to the middle
+                 # 2. add a risk scale at the top
+                 # 3. let user able to wrap up the filter
+                 # 4. change neighborhood input to zipcode input
                  absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
-                               draggable = TRUE, top = "100", left = "70", 
+                               draggable = TRUE, top = "120", left = "70", 
                                right = "auto", bottom = "auto",
                                width = "330", height = "500",
                                
-                               h3("explorer"),
+                               h3("filter"),
                                
                                selectInput("statistic",
                                            "You are interested in...",
                                            c("exposure risk", "public mobility", "death rate","infectious rate"),
                                            selected = "exposure risk"),
-                               selectInput("community",
+                               selectInput("neighborhood",
                                            "locate at ...",
                                            unique(COVID19_by_Neighborhood$COMTY_NAME),
                                            multiple = T),
                                plotly::plotlyOutput("hist", height = 200)
-                               )))
+                 )
+        ),
+        tabPanel("Raw data table",
+                 DT::dataTableOutput("rawData")
+        )
+    )
 )
 
 server <- function(input, output) {
     options(tigris_use_cache = TRUE)
     output$select_stat = renderText(paste("So you want to know",input$statistic))
+    
+    # the map is made from here:
+    # to-dos: 
+# 1.show the selected neighborhood AND zipcode only by input$zipcode and input$neighborhood
+# 2.show a pop-up when the mouse hover over a zipcode, 
+#     with information: zipcode, risk score, cummulative cases, population.
+# 3. add search location bar on the right of zoom -/+ buttons. See London map.
+
     output$map = renderLeaflet({
         char_zips <- readRDS("char_zips.rds")
         
@@ -88,6 +111,9 @@ server <- function(input, output) {
                 geom_histogram(aes(x=cases), binwidth=30) +
                 theme_classic()
         )
+    })
+    output$rawData = DT::renderDataTable({
+        COVID19_by_Neighborhood
     })
 }
 
