@@ -138,7 +138,10 @@ lm.model2 = train(data = zip_daily_scaled2,
 
 ## model2 performace
 lm.model2$bestTune
-lm.model2$results # MSE 3.337, R-sq 0.6414457
+lm.model2$results # RMSE 3.337, R-sq 0.6414457
+plot(zip_daily_scaled2$ave_new7_10after)
+mean(zip_daily_scaled2$ave_new7_10after)
+
 model2.coef = data.frame(coef = coef(lm.model2$finalModel,25),
                          features = names(coef(lm.model2$finalModel,25)))
 
@@ -148,7 +151,8 @@ ggplot(model2.coef, aes(x=coef, y = features)) +
 
 y_yhat = data.frame(predict_case=predict(lm.model2), true_case=zip_daily_scaled2$ave_new7_10after)
 ggplot(y_yhat, aes(x=predict_case,y=true_case)) +
-  geom_point()
-predict(lm.model2)
+  geom_point() + geom_abline(slope = 1, intercept = 0, color="red") +
+  coord_fixed(ratio = 1) +
+  theme_minimal()
 # write csv file for other model use
-write.csv(zip_daily2,"zipcode_daily_with_1_11_future_day_case_count.csv")
+#write.csv(zip_daily2,"zipcode_daily_with_1_11_future_day_case_count.csv")
