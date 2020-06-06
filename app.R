@@ -10,10 +10,10 @@ library(tigris)
 library(DT)
 library(readxl)
 COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
-zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.csv")
+zipcode_daily <- read.csv("data/zipcode_daily_with_1_11_future_day_case_count.csv", header=T)
 
 # some new datasets, might be helpful
-zipcode_daily_income <- read_csv("data/zipcode_daily_cases&social-distance&population&income.csv")
+zipcode_daily_income <- read_csv("data/zipcode_daily_cases&social-distance&population&income.xlsx")
 places_totals <- read_csv("data/latimes-place-totals.csv")
 
 # char_zips <- zctas(cb = TRUE, starts_with = c("90","91","92"))
@@ -88,6 +88,8 @@ server <- function(input, output) {
         char_zips <- readRDS("char_zips.rds")
         
         # join zip boundaries and case count
+        char_zips %>%
+            filter(GEOID10 %in% zipcode_daily$ZIP)
         char_zips <- geo_join(char_zips, 
                               data.frame("zipcode"=char_zips$GEOID10,"RiskScore" = c(1:652)), 
                               by_sp = "GEOID10", 
