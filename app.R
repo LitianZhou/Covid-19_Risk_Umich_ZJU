@@ -13,8 +13,9 @@ COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
 zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.csv")
 
 # some new datasets, might be helpful
-# when I show the .xlsx dataset, there are something wrong with the date
-zipcode_daily_income <- read_excel("data/zipcode_daily_cases&social-distance&population&income.xlsx") 
+# when I show the .xlsx dataset, there are something wrong with the date, so I change the xlsx file into .csv file
+# zipcode_daily_income <- read_excel("data/zipcode_daily_cases&social-distance&population&income.xlsx")
+zipcode_daily_income <- read_csv("data/zipcode_daily_cases&social-distance&population&income.csv") 
 places_totals <- read_csv("data/latimes-place-totals.csv")
 risk_scores_table <- read_csv("data/risk_score.csv")
 
@@ -83,7 +84,7 @@ ui <- fluidPage(
                  # controls to select a data set and spcify the number of observations to view
                  sidebarPanel(
                    selectInput("dataset","Choose a dataset:",
-                               choices = c("zipcode_daily","place_totals")),
+                               choices = c("zipcode_daily_income","place_totals")),
                    numericInput("obs", "Number of observations to view:", 10)
                  ),
                  mainPanel(
@@ -163,7 +164,7 @@ server <- function(input, output) {
     # Return the requested dataset
     datasetInput <- reactive({
       switch(input$dataset,
-             "zipcode_daily" = zipcode_daily_income,
+             "zipcode_daily_income" = zipcode_daily_income,
              "place_totals" = places_totals2,
              )
     })
