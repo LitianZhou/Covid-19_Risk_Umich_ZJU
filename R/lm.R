@@ -31,7 +31,7 @@ zip_daily$high_income = (zip_daily$Income_level==3)
 zip_daily$stay_home_ratio = zip_daily$completely_home_device_count / zip_daily$device_count
 # no slash / in feature name pls!
 colnames(zip_daily)[14:15] = c("cases_adjusted_by_pop","new_cases_adjusted_by_pop")
-# get rid of tibble to run faster and avoid seesion abortion
+# get rid of tibble to run faster and avoid session abortion
 zip_daily1 = as.data.frame(zip_daily)
 
 # Model1: previous 5 days + today's mobility to predict today's Risk(new cases_pop_adjusted）
@@ -113,78 +113,42 @@ zip_daily2$ave_new6_9after = apply(zip_daily2[,29:32],1,mean)
 zip_daily2$ave_new7_10after = apply(zip_daily2[,30:33],1,mean)
 zip_daily2$ave_new8_11after = apply(zip_daily2[,31:34],1,mean)
 
-# predict 6-9
+# save and load the dataset with mobility data padded
+zip_daily2 = read.csv("~/Desktop/zipcode_daily_with_1_11_future_day_case_count.csv")
+# predict 7-10
+zip_daily2 = zip_daily2 %>%
+  filter(as.numeric(as_date(zip_daily2$date)) < as.numeric(as_date("2020-05-16")))
 zip_daily_scaled2 = scale(zip_daily2[,sapply(zip_daily2, is.numeric)])
-zip_daily_scaled2[,28] = zip_daily2$ave_new6_9after
-zip_daily_scaled2 = as.data.frame(zip_daily_scaled2[,c(-1,-22:-27,-29,-30)])
+zip_daily_scaled2[,38] = zip_daily2$ave_new7_10after
+zip_daily_scaled2 = as.data.frame(zip_daily_scaled2)
+zip_daily_scaled2 = zip_daily_scaled2 %>% 
+  select(-c("X","ZIP", "new7day_after","new8day_after","new9day_after",
+            "new10day_after","new11day_after","ave_new6_9after","ave_new8_11after"))
+  
 
-set.seed(7) # set for reproducibility
+
+set.seed(1) # set for reproducibility
 train.control = trainControl(method = "cv", number = 10) # 10-fold cross validation
 lm.model2 = train(data = zip_daily_scaled2, 
-                  ave_new6_9after ~.,
+                  ave_new7_10after ~.,
                   method = "leapSeq",
-                  tuneGrid = data.frame(nvmax = 5:15),
+                  tuneGrid = data.frame(nvmax = 3:30),
                   trControl = train.control
 )
 
 ## model2 performace
 lm.model2$bestTune
-lm.model2$results # MSE 3.314, R-sq 6.26
-model2.coef = data.frame(coef = coef(lm.model2$finalModel,14),
-                         features = names(coef(lm.model2$finalModel,14)))
-#summary(lm.model1$finalModel)
+lm.model2$results # MSE 3.337, R-sq 0.6414457
+model2.coef = data.frame(coef = coef(lm.model2$finalModel,25),
+                         features = names(coef(lm.model2$finalModel,25)))
+
 ggplot(model2.coef, aes(x=coef, y = features)) +
   geom_point() + geom_vline(xintercept = 0, colour="red") +
   theme_minimal()
 
-# predict 7-10
-zip_daily_scaled3 = scale(zip_daily2[,sapply(zip_daily2, is.numeric)])
-zip_daily_scaled3[,28] = zip_daily2$ave_new7_10after
-zip_daily_scaled3 = as.data.frame(zip_daily_scaled3[,c(-1,-23:-27,-29,-30)])
-
-set.seed(7) # set for reproducibility
-train.control = trainControl(method = "cv", number = 10) # 10-fold cross validation
-lm.model3 = train(data = zip_daily_scaled3, 
-                  ave_new7_10after ~.,
-                  method = "leapSeq",
-                  tuneGrid = data.frame(nvmax = 5:15),
-                  trControl = train.control
-)
-
-## model3 performace
-lm.model3$bestTune
-lm.model3$results # Best MSE 3.386, R-sq  0.634
-model3.coef = data.frame(coef = coef(lm.model3$finalModel,14),
-                         features = names(coef(lm.model3$finalModel,14)))
-#summary(lm.model3$finalModel)
-ggplot(model3.coef, aes(x=coef, y = features)) +
-  geom_point() + geom_vline(xintercept = 0, colour="red") +
-  theme_minimal()
-
-# predict 8-11
-zip_daily_scaled4 = scale(zip_daily2[,sapply(zip_daily2, is.numeric)])
-zip_daily_scaled4[,30] = zip_daily2$ave_new8_11after
-zip_daily_scaled4 = as.data.frame(zip_daily_scaled4[,c(-1,-24:-29)])
-
-set.seed(7) # set for reproducibility
-train.control = trainControl(method = "cv", number = 10) # 10-fold cross validation
-lm.model4 = train(data = zip_daily_scaled4, 
-                  ave_new8_11after ~.,
-                  method = "leapSeq",
-                  tuneGrid = data.frame(nvmax = 5:15),
-                  trControl = train.control
-)
-
-## model4 performace
-lm.model4$bestTune
-lm.model4$results # MSE 3.41, R-sq  0.6367
-model4.coef = data.frame(coef = coef(lm.model4$finalModel,13),
-                         features = names(coef(lm.model4$finalModel,13)))
-#summary(lm.model4$finalModel)
-ggplot(model4.coef, aes(x=coef, y = features)) +
-  geom_point() + geom_vline(xintercept = 0, colour="red") +
-  theme_minimal()
-
-# visualization of
+y_yhat = data.frame(predict_case=predict(lm.model2), true_case=zip_daily_scaled2$ave_new7_10after)
+ggplot(y_yhat, aes(x=predict_case,y=true_case)) +
+  geom_point()
+predict(lm.model2)
 # write csv file for other model use
 write.csv(zip_daily2,"zipcode_daily_with_1_11_future_day_case_count.csv")

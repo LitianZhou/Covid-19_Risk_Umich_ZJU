@@ -11,14 +11,11 @@ library(DT)
 library(readxl)
 COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
 zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.csv")
-<<<<<<< HEAD
 
-=======
 # some new datasets, might be helpful
 zipcode_daily_income <- read_csv("data/zipcode_daily_cases&social-distance&population&income.csv")
 places_totals <- read_csv("data/latimes-place-totals.csv")
->>>>>>> 313e5bbe9f48c50382d4d6a34a8d6a1ac59d5e42
->>>>>>> 7c23001d48b0294941a75418fcf43bf5cb66496b
+
 # char_zips <- zctas(cb = TRUE, starts_with = c("90","91","92"))
 # saveRDS(char_zips, "char_zips.rds")
 # Our reference
