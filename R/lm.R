@@ -142,9 +142,9 @@ lm.model2$results # RMSE 3.337, R-sq 0.6414457
 plot(zip_daily_scaled2$ave_new7_10after)
 mean(zip_daily_scaled2$ave_new7_10after)
 
-model2.coef = data.frame(coef = coef(lm.model2$finalModel,25),
-                         features = names(coef(lm.model2$finalModel,25)))
-
+model2.coef = data.frame(coef = coef(lm.model2$finalModel,16),
+                         features = names(coef(lm.model2$finalModel,16)))
+summary(lm.model2)
 ggplot(model2.coef, aes(x=coef, y = features)) +
   geom_point() + geom_vline(xintercept = 0, colour="red") +
   theme_minimal()

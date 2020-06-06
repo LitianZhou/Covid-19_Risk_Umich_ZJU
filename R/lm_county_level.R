@@ -53,8 +53,8 @@ lm.model1 = train(data = county_daily_scaled,
 ## model1 performace
 lm.model1$bestTune
 lm.model1$results
-model1.coef = data.frame(coef = coef(lm.model1$finalModel,6),
-                         features = names(coef(lm.model1$finalModel,5)))
+model1.coef = data.frame(coef = coef(lm.model1$finalModel,2),
+                         features = names(coef(lm.model1$finalModel,2)))
 summary(lm.model1$finalModel)
 ggplot(model1.coef, aes(x=coef, y = features)) +
   geom_point() + geom_vline(xintercept = 0, colour="red") +
