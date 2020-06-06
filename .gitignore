@@ -1,5 +1,8 @@
 packrat/lib*/
 .Rproj.user
 .RData
+.Rprofile
+.Rhistory
+.Rapp.history
 *.py
 credentials.json
