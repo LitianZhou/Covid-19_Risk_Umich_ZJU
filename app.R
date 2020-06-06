@@ -39,6 +39,7 @@ ui <- fluidPage(
     titlePanel("Covid-19 Risk Umich + ZJU"),
     tabsetPanel(
         tabPanel("Map: Infection Rate",
+                 HTML("<button type='button' class='btn btn-danger' data-toggle='collapse' data-target='#demo'>Date Selector</button>"),
                  textOutput("select_stat"),
                  leafletOutput("map",width = "100%", height = 700),
                  
@@ -47,22 +48,32 @@ ui <- fluidPage(
                  # 2. add a risk scale at the top
                  # 3. let user able to wrap up the filter ()
                  # 4. change neighborhood input to zipcode input
+                 div(id = "demo", class = "collapse in", 
                  absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
                                draggable = TRUE, top = "120", left = "70", 
                                right = "auto", bottom = "auto",
                                width = "330", height = "500",
                                
-                               h3("filter"),
-                               
-                               selectInput("statistic",
-                                           "You are interested in...",
-                                           c("exposure risk", "public mobility", "death rate","infectious rate"),
-                                           selected = "exposure risk"),
-                               selectInput("neighborhood",
-                                           "locate at ...",
-                                           unique(COVID19_by_Neighborhood$COMTY_NAME),
-                                           multiple = T),
-                               plotly::plotlyOutput("hist", height = 200)
+                               sliderInput(inputId = "dateInput", 
+                                           label = "Dates:",
+                                           min = as.Date("2020-03-15","%Y-%m-%d"),
+                                           max = as.Date("2020-05-27","%Y-%m-%d"),
+                                           value = as.Date("2020-04-29"), timeFormat="%Y-%m-%d", 
+                                           step = 1,
+                                           animate = animationOptions(interval = 1800))
+    
+                               # h3("filter"),
+                               # 
+                               # selectInput("statistic",
+                               #             "You are interested in...",
+                               #             c("exposure risk", "public mobility", "death rate","infectious rate"),
+                               #             selected = "exposure risk"),
+                               # selectInput("neighborhood",
+                               #             "locate at ...",
+                               #             unique(COVID19_by_Neighborhood$COMTY_NAME),
+                               #             multiple = T),
+                               # plotly::plotlyOutput("hist", height = 200)
+                 )
                  )
         ),
         tabPanel("Map: Mobility Index",
@@ -85,7 +96,8 @@ ui <- fluidPage(
                  # controls to select a data set and spcify the number of observations to view
                  sidebarPanel(
                    selectInput("dataset","Choose a dataset:",
-                               choices = c("zipcode_daily_income","place_totals")),
+                               choices = c("zipcode_daily","place_totals", "trend_data")
+                               ),
                    numericInput("obs", "Number of observations to view:", 10)
                  ),
                  mainPanel(
@@ -169,6 +181,7 @@ server <- function(input, output) {
       switch(input$dataset,
              "zipcode_daily_income" = zipcode_daily_income,
              "place_totals" = places_totals2,
+             "trend_data" = trend
              )
     })
     # Generate a summary of the dataset
