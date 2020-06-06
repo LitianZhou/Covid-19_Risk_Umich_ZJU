@@ -10,11 +10,24 @@ library(tigris)
 library(DT)
 library(readxl)
 COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
-zipcode_daily <- read.csv("data/zipcode_daily_with_1_11_future_day_case_count.csv", header=T)
+
+zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.csv")
 
 # some new datasets, might be helpful
-zipcode_daily_income <- read_csv("data/zipcode_daily_cases&social-distance&population&income.xlsx")
+# when I show the .xlsx dataset, there are something wrong with the date, so I change the xlsx file into .csv file
+# zipcode_daily_income <- read_excel("data/zipcode_daily_cases&social-distance&population&income.xlsx")
+zipcode_daily_income <- read_csv("data/zipcode_daily_cases&social-distance&population&income.csv") 
 places_totals <- read_csv("data/latimes-place-totals.csv")
+risk_scores_table <- read_csv("data/risk_score.csv")
+
+
+#data cleaning
+#get combined table for the three trend plot variables 
+infect_rate_by_zip <- zipcode_daily_income %>% transmute(new_confirmed_cases, date, ZIP, type = "infect_rate") %>% rename(value = new_confirmed_cases)
+risk_scores <- risk_scores_table %>%  transmute(value = value * 1000, date, ZIP, type = "risk_score")
+mobility_indices <- zipcode_daily_income %>% transmute(ZIP, date, type = "mobility_index", value = (median_non_home_dwell_time - median_home_dwell_time) * distance_traveled_from_home / -100000) 
+joined_df <- rbind(infect_rate_by_zip, risk_scores)
+trend <- rbind(joined_df, mobility_indices)
 
 # char_zips <- zctas(cb = TRUE, starts_with = c("90","91","92"))
 # saveRDS(char_zips, "char_zips.rds")
@@ -25,7 +38,7 @@ places_totals <- read_csv("data/latimes-place-totals.csv")
 ui <- fluidPage(
     titlePanel("Covid-19 Risk Umich + ZJU"),
     tabsetPanel(
-        tabPanel("Interactive map",
+        tabPanel("Map: Infection Rate",
                  textOutput("select_stat"),
                  leafletOutput("map",width = "100%", height = 700),
                  
@@ -52,15 +65,27 @@ ui <- fluidPage(
                                plotly::plotlyOutput("hist", height = 200)
                  )
         ),
-        tabPanel("Raw data table",
-                 DT::dataTableOutput("rawData")
+        tabPanel("Map: Mobility Index",
+        ),
+        tabPanel("Map: Risk Score",
+        ),
+        tabPanel("Trend Plot",
+                 sidebarPanel(
+                   selectInput("zipID",
+                               "locate at ...",
+                               unique(risk_scores_table$ZIP),
+                               multiple = F),
+                 ),
+                 mainPanel(
+                   plotly::plotlyOutput("trend_plot_by_county", height = 800)
+                 )
         ),
         # a new kind of tab to show
         tabPanel("Raw data table(new)",
                  # controls to select a data set and spcify the number of observations to view
                  sidebarPanel(
                    selectInput("dataset","Choose a dataset:",
-                               choices = c("zipcode_daily","place_totals")),
+                               choices = c("zipcode_daily_income","place_totals")),
                    numericInput("obs", "Number of observations to view:", 10)
                  ),
                  mainPanel(
@@ -137,21 +162,12 @@ server <- function(input, output) {
         )
     })
     
-    # choose columns to display
-    zipcode_daily2 <- zipcode_daily %>% select(ZIP:places)
-    
-    output$rawData = DT::renderDataTable({
-        zipcode_daily2
-    })
-    
-    
-    
     # new raw_data table
     places_totals2 <- places_totals %>% select(date:new_confirmed_cases)
     # Return the requested dataset
     datasetInput <- reactive({
       switch(input$dataset,
-             "zipcode_daily" = zipcode_daily_income,
+             "zipcode_daily_income" = zipcode_daily_income,
              "place_totals" = places_totals2,
              )
     })
@@ -194,7 +210,19 @@ server <- function(input, output) {
         showZipcodePopup(event$id, event$lat, event$lng)
       })
     })
-    
+  
+    #trend plot: return trend plot by zipcode entered
+    output$trend_plot_by_county = renderPlotly({
+      trend_input <- trend %>% filter(ZIP == input$zipID)
+      ggplotly(
+          ggplot(data = trend_input, aes(x=date, y=value, group=type, color = type)) +
+          geom_line() +
+          geom_smooth() + 
+          theme_classic()
+      )
+
+    })
+
 }
 
 shinyApp(ui = ui, server = server)
