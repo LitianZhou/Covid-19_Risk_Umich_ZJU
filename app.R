@@ -13,7 +13,8 @@ COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
 zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.csv")
 
 # some new datasets, might be helpful
-zipcode_daily_income <- read_excel("data/zipcode_daily_cases&social-distance&population&income.xlsx")
+# when I show the .xlsx dataset, there are something wrong with the date
+zipcode_daily_income <- read_excel("data/zipcode_daily_cases&social-distance&population&income.xlsx") 
 places_totals <- read_csv("data/latimes-place-totals.csv")
 risk_scores_table <- read_csv("data/risk_score.csv")
 
