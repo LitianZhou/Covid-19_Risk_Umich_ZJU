@@ -282,7 +282,7 @@ server <- function(input, output) {
                             trend_date, 
                             by_sp = "GEOID10", 
                             by_df = "ZIP",
-                            how = "left")
+                            how = "inner")
       pal <- colorNumeric(
         palette = "Reds",
         #domain = c(0:700))
