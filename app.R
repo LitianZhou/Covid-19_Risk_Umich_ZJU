@@ -92,10 +92,18 @@ ui <- fluidPage(
         ),
         tabPanel("Trend Plot",
                  sidebarPanel(
+                   h3("Zip Code Selector"),
                    selectInput("zipID",
                                "locate at ...",
                                unique(risk_scores_table$ZIP),
                                multiple = F),
+                   HTML("<button type='button' class='btn btn-danger' data-toggle='collapse' data-target='#explain'>Click to see how we got each statistic</button>"),
+                   div(id = "explain", class = "collapse", 
+                       "Infection rate: daily case$new confirmed cases
+                       Risk score: LSTM outcome * 1000
+                       Mobility index: (median_non_home_dwell_time - median_home_dwell_time) *distance_traveled_from_home
+                       rescale to 0-100"
+                   )
                  ),
                  mainPanel(
                    plotly::plotlyOutput("trend_plot_by_county", height = 800)
