@@ -118,37 +118,53 @@ zip_daily2 = read.csv("~/Desktop/zipcode_daily_with_1_11_future_day_case_count.c
 # predict 7-10
 zip_daily2 = zip_daily2 %>%
   filter(as.numeric(as_date(zip_daily2$date)) < as.numeric(as_date("2020-05-16")))
+zip_daily2$stay_home_ratio = zip_daily2$completely_home_device_count/zip_daily2$population
+# store the scale mean and sd
+scale_para = t(data.frame(mean=apply(zip_daily2[,sapply(zip_daily2, is.numeric)], 2, mean),
+                        sd=apply(zip_daily2[,sapply(zip_daily2, is.numeric)], 2, sd)))
 zip_daily_scaled2 = scale(zip_daily2[,sapply(zip_daily2, is.numeric)])
 zip_daily_scaled2[,38] = zip_daily2$ave_new7_10after
 zip_daily_scaled2 = as.data.frame(zip_daily_scaled2)
 zip_daily_scaled2 = zip_daily_scaled2 %>% 
-  select(-c("X","ZIP", "new7day_after","new8day_after","new9day_after",
-            "new10day_after","new11day_after","ave_new6_9after","ave_new8_11after"))
-  
+  select(-c("X","ZIP", "new7day_after","new8day_after","new9day_after", "device_count",
+            "new10day_after","new11day_after","ave_new6_9after","ave_new8_11after",
+            "Land_Sq_Mi","new_cases_adjusted_by_pop","cases_adjusted_by_pop","stay_home_ratio",
+            "median_percentage_time_home","completely_home_device_count"))
+scale_para = data.frame(scale_para) %>%
+  select(-c("X","ZIP", "new7day_after","new8day_after","new9day_after", "device_count",
+            "new10day_after","new11day_after","ave_new6_9after","ave_new8_11after",
+            "Land_Sq_Mi","new_cases_adjusted_by_pop","cases_adjusted_by_pop","stay_home_ratio",
+            "median_percentage_time_home","completely_home_device_count"))
 
-
-set.seed(1) # set for reproducibility
+set.seed(7) # set for reproducibility
 train.control = trainControl(method = "cv", number = 10) # 10-fold cross validation
 lm.model2 = train(data = zip_daily_scaled2, 
                   ave_new7_10after ~.,
                   method = "leapSeq",
-                  tuneGrid = data.frame(nvmax = 3:30),
+                  tuneGrid = data.frame(nvmax = 3:24),
                   trControl = train.control
 )
 
 ## model2 performace
 lm.model2$bestTune
 lm.model2$results # RMSE 3.337, R-sq 0.6414457
-plot(zip_daily_scaled2$ave_new7_10after)
-mean(zip_daily_scaled2$ave_new7_10after)
 
-model2.coef = data.frame(coef = coef(lm.model2$finalModel,16),
-                         features = names(coef(lm.model2$finalModel,16)))
-summary(lm.model2)
-ggplot(model2.coef, aes(x=coef, y = features)) +
+intercept = coef(lm.model2$finalModel,as.numeric(lm.model2$bestTune))[1]
+coef_scaled = coef(lm.model2$finalModel,as.numeric(lm.model2$bestTune))[-1]
+coef_name = names(coef(lm.model2$finalModel,as.numeric(lm.model2$bestTune)))[-1]
+coef_ori_scale = as.numeric(coef_scaled * scale_para[2,coef_name] + scale_para[1,coef_name])
+model2.coef = data.frame(cbind(round(coef_scaled,3),round(coef_ori_scale)))
+colnames(model2.coef) = c("coefficients with standardized predictors", "coefficients of original scale")
+write.csv(model2.coef, "lm_coefficients")
+
+table(data.frame(model2.coef))
+#summary(lm.model2)
+ggplot(model2.coef, aes(x=coef, y = coef_name)) +
   geom_point() + geom_vline(xintercept = 0, colour="red") +
   theme_minimal()
-
+# to-do:
+# box plot of coefficients
+# features order: mobility, case count, social economic
 y_yhat = data.frame(predict_case=predict(lm.model2), true_case=zip_daily_scaled2$ave_new7_10after)
 ggplot(y_yhat, aes(x=predict_case,y=true_case)) +
   geom_point() + geom_abline(slope = 1, intercept = 0, color="red") +

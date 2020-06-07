@@ -1,0 +1,18 @@
+"","coefficients with standardized predictors","coefficients of original scale"
+"confirmed_cases",1.397,233
+"new_confirmed_cases",0.533,7
+"population",0.442,50634
+"Density_Per_Sq_Mile",0.11,9675
+"Income_level",-0.301,2
+"driving",-1.55,36
+"transit",0.777,29
+"walking",1.451,71
+"retail_and_recreation_percent_change_from_baseline",0.21,-48
+"grocery_and_pharmacy_percent_change_from_baseline",-0.705,-24
+"parks_percent_change_from_baseline",-0.343,-42
+"new1day_after",0.475,7
+"new2day_after",0.592,8
+"new3day_after",0.523,7
+"new4day_after",0.456,7
+"new5day_after",0.967,10
+"new6day_after",0.81,10
