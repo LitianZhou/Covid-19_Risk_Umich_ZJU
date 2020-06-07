@@ -263,7 +263,7 @@ server <- function(input, output) {
       ggplotly(
           ggplot(data = trend_input, aes(x=date, y=value, color=type)) +
           geom_line(linetype = a) +
-          geom_smooth(se = FALSE, linetype = b) + 
+          geom_smooth(se = FALSE, linetype = "dashed") + 
           theme_classic()
       )
 
