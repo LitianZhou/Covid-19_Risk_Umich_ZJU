@@ -3,6 +3,7 @@ library(caret)
 library(ggplot2)
 library(lubridate)
 library(readxl)
+library(broom)
 
 zip_daily = read_excel("data_updated/zipcode_daily_cases_social-distance_population_income.xlsx")
 
@@ -115,6 +116,7 @@ zip_daily2$ave_new8_11after = apply(zip_daily2[,31:34],1,mean)
 
 # save and load the dataset with mobility data padded
 zip_daily2 = read.csv("~/Desktop/zipcode_daily_with_1_11_future_day_case_count.csv")
+
 # predict 7-10
 zip_daily2 = zip_daily2 %>%
   filter(as.numeric(as_date(zip_daily2$date)) < as.numeric(as_date("2020-05-16")))
@@ -155,12 +157,18 @@ coef_name = names(coef(lm.model2$finalModel,as.numeric(lm.model2$bestTune)))[-1]
 coef_ori_scale = as.numeric(coef_scaled * scale_para[2,coef_name] + scale_para[1,coef_name])
 model2.coef = data.frame(cbind(round(coef_scaled,3),round(coef_ori_scale)))
 colnames(model2.coef) = c("coefficients with standardized predictors", "coefficients of original scale")
-write.csv(model2.coef, "lm_coefficients")
+write.csv(model2.coef, "lm_coefficients.csv")    #show on the report and website
 
-table(data.frame(model2.coef))
+
+models <- zip_daily_scaled2 %>% 
+  select(c(ave_new7_10after,coef_name)) %>%
+  do(data.frame(tidy(lm(ave_new7_10after ~ ., data = .),conf.int=T )))
+
+
 #summary(lm.model2)
-ggplot(model2.coef, aes(x=coef, y = coef_name)) +
+ggplot(models, aes(x=estimate, y = term)) +
   geom_point() + geom_vline(xintercept = 0, colour="red") +
+  geom_errorbar(aes(xmin=conf.low, xmax=conf.high)) +
   theme_minimal()
 # to-do:
 # box plot of coefficients
