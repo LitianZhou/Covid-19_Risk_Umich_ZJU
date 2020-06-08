@@ -75,7 +75,7 @@ ui <- fluidPage(
                      absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
                                    draggable = TRUE, top = "120", left = "70", 
                                    right = "auto", bottom = "auto",
-                                   width = "330", height = "260",
+                                   width = "330", height = "500",
                          sliderInput(inputId = "dateInput", 
                                      label = "Dates:",
                                      min = as.Date("2020-03-15","%Y-%m-%d"),
@@ -87,6 +87,11 @@ ui <- fluidPage(
                                      "You are interested in...",
                                      c( "Infection Rate","Mobility Index", "Risk Score"),
                                      selected = "Infection Rate"),
+                         selectInput("zip_search",
+                                     "locate at ...",
+                                     unique(risk_scores_table$ZIP),
+                                     multiple = F),
+                         textOutput("stat_output")
                      )
                  )
         ),
@@ -97,11 +102,14 @@ ui <- fluidPage(
                                "locate at ...",
                                unique(risk_scores_table$ZIP),
                                multiple = F),
-                   HTML("<button type='button' class='btn btn-danger' data-toggle='collapse' data-target='#explain'>Click to see how we got each statistic</button>"),
+                   HTML("<button type='button' class='btn btn-danger' data-toggle='collapse' data-target='#explain'>Statistics Details</button>"),
                    div(id = "explain", class = "collapse", 
-                       "Infection rate: daily case$new confirmed cases
-                       Risk score: LSTM outcome * 1000
-                       Mobility index: (median_home_dwell_time - median_non_home_dwell_time) *distance_traveled_from_home / 60000"
+                       h5("Infection rate: "),
+                       "daily new confirmed cases /population * 100000 (number of daily new confirmed cases per 100,000 population at the county level)",
+                       h5("Risk score: "),
+                       " LSTM model outcome * 1000",
+                       h5("Mobility index: "),
+                       "(median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600,000",
                    )
                  ),
                  mainPanel(
@@ -344,6 +352,16 @@ server <- function(input, output) {
 
     })
     
+    #stat map: display stat info based on date, stat type and county selection
+    output$stat_output = renderText({
+      trend_filtered <- trend %>% filter(date == input$dateInput, type == input$stat_mode, ZIP == input$zip_search) %>% select(value)
+      paste("On date ", input$dateInput," the ", input$stat_mode, " at ZIP ", input$zip_search, " is ", trend_filtered)
+      # if (trend_filtered == numeric(0)){
+      #   paste("Known.")
+      # } else {
+      #   paste(trend_filtered)
+      # }
+            })
     
     #raw data table: test purposes
     output$rawData = DT::renderDataTable({
@@ -353,8 +371,10 @@ server <- function(input, output) {
       # trend_date_pos <- trend_mobility %>% filter(value >= 0) %>% mutate(value_integer = trunc(log1p(value)))
       # trend_date_neg <- trend_mobility %>% filter(value < 0) %>% mutate(value_integer =  -1 * trunc(log1p(abs(value))))
       # trend_mobility <- rbind(trend_date_pos, trend_date_neg)
+      trend_filtered <- trend %>% filter(date == as.Date("2020-05-01"), type == "Infection Rate", ZIP == "90001")
+      
       trend_risk <- trend %>% filter(type == "Risk Score") %>% mutate(value_log = log1p(value))
-      trend_infect
+      trend_filtered
     })
 
 }
