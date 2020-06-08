@@ -23,9 +23,9 @@ risk_scores_table <- read_csv("data/risk_score.csv")
 
 #data cleaning
 #get combined table for the three trend plot variables 
-infect_rate_by_zip <- zipcode_daily_income %>% transmute(new_confirmed_cases, date, ZIP, type = "Infection Rate") %>% rename(value = new_confirmed_cases)
+infect_rate_by_zip <- zipcode_daily_income %>% transmute(value = new_confirmed_cases/population * 100000, date, ZIP, type = "Infection Rate")
 risk_scores <- risk_scores_table %>%  transmute(value = value * 1000, date, ZIP, type = "Risk Score")
-mobility_indices <- zipcode_daily_income %>% transmute(ZIP, date, type = "Mobility Index", value = (median_non_home_dwell_time - median_home_dwell_time) * distance_traveled_from_home / -100000) 
+mobility_indices <- zipcode_daily_income %>% transmute(ZIP, date, type = "Mobility Index", value = (median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600000) 
 joined_df <- rbind(infect_rate_by_zip, risk_scores)
 trend <- rbind(joined_df, mobility_indices) 
 #convert the date column to date object and arrange by date order
@@ -101,8 +101,7 @@ ui <- fluidPage(
                    div(id = "explain", class = "collapse", 
                        "Infection rate: daily case$new confirmed cases
                        Risk score: LSTM outcome * 1000
-                       Mobility index: (median_non_home_dwell_time - median_home_dwell_time) *distance_traveled_from_home
-                       rescale to 0-100"
+                       Mobility index: (median_home_dwell_time - median_non_home_dwell_time) *distance_traveled_from_home / 60000"
                    )
                  ),
                  mainPanel(
@@ -276,7 +275,29 @@ server <- function(input, output) {
       #specify date and type of stat(i.e. Infection Rate, Mobility Index, Risk Score)
       #round the values to integer to faciliate coloring
       stat_type <- input$stat_mode
-      trend_date <- trend %>% filter(date == input$dateInput) %>% select(-date) %>% filter(type == stat_type) %>% mutate (value_integer = trunc(value))
+      trend_date <- trend %>% filter(date == input$dateInput) %>% select(-date) %>% filter(type == stat_type)
+      
+      #get domain and palette, and process data based on stat choice
+      if (stat_type == "Infection Rate"){
+        trend_date <- trend_date %>% mutate(value_integer = trunc(log1p(value)))
+        domain_in = c(0:7)
+        palette_in = "Reds"
+      } else if (stat_type == "Mobility Index"){
+        trend_date <- trend_date %>% mutate(value_integer = trunc(value))
+        
+        domain_in = c(-110:100)
+        rc1 <- colorRampPalette(colors = c("green", "white"), space = "Lab", bias = 1)(110)
+        rc2 <- colorRampPalette(colors = c("white", "red"), space = "Lab", bias = 1)(100)
+        palette_in = c(rc1, rc2)
+      } else {
+        trend_date <- trend_date %>% mutate(value_integer = trunc(value))
+        domain_in = c(-12:200)
+        rc1 <- colorRampPalette(colors = c("green", "white"), space = "Lab", bias = 1)(12)
+        rc2 <- colorRampPalette(colors = c("white", "red"), space = "Lab", bias = 1)(200)
+        palette_in = c(rc1, rc2)
+        
+      }
+      
       
       char_zips <- geo_join(char_zips, 
                             trend_date, 
@@ -284,15 +305,8 @@ server <- function(input, output) {
                             by_df = "ZIP",
                             how = "inner")
       pal <- colorNumeric(
-        palette = "Reds",
-        #domain = c(0:700))
-        if (stat_type == "Infection Rate"){
-          domain = c(0:37)
-        } else if (stat_type == "Mobility Index"){
-          domain = c(-640:3400)
-        } else {
-          domain = c(-12:200)
-        }
+        palette = palette_in,
+        domain = domain_in
       )
 
       labels <- paste0(
@@ -318,11 +332,14 @@ server <- function(input, output) {
                                                  dashArray = "",
                                                  fillOpacity = 0.7,
                                                  bringToFront = TRUE),label = labels) %>%
+
         addLegend(pal = pal,
-                  values = ~value,
+                  values = ~value_integer,
                   opacity = 0.7,
-                  title = htmltools::HTML("Case Count <br>
-                                    by Zip Code"),
+                  labFormat = labelFormat(
+                      transform = function(x) {if (stat_type == "Infection Rate"){exp(x) + 1} else {x}}
+                  ),
+                  title = htmltools::HTML(paste0(stat_type, "<br> \n by Zip Code")),
                   position = "bottomright")
 
     })
@@ -330,7 +347,14 @@ server <- function(input, output) {
     
     #raw data table: test purposes
     output$rawData = DT::renderDataTable({
-      trend
+      trend_infect <- trend %>% filter(type == "Infection Rate") %>% mutate(value_log = trunc(log1p(value)))
+      trend_mobility <- trend %>% filter(type == "Mobility Index")
+      
+      # trend_date_pos <- trend_mobility %>% filter(value >= 0) %>% mutate(value_integer = trunc(log1p(value)))
+      # trend_date_neg <- trend_mobility %>% filter(value < 0) %>% mutate(value_integer =  -1 * trunc(log1p(abs(value))))
+      # trend_mobility <- rbind(trend_date_pos, trend_date_neg)
+      trend_risk <- trend %>% filter(type == "Risk Score") %>% mutate(value_log = log1p(value))
+      trend_infect
     })
 
 }
