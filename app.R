@@ -68,12 +68,12 @@ ui <- fluidPage(
                                plotly::plotlyOutput("hist", height = 200)
                  )
         ),
-        tabPanel("Map by Statistics",
+        tabPanel("Map by Statistic",
                  HTML("<button type='button' class='btn btn-danger' data-toggle='collapse' data-target='#demo'>Date Selector</button>"),
                  leafletOutput("map_stat",width = "100%", height = 700),
                  div(id = "demo", class = "collapse in", 
                      absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
-                                   draggable = TRUE, top = "120", left = "70", 
+                                   draggable = TRUE, top = "150", left = "70", 
                                    right = "auto", bottom = "auto",
                                    width = "330", height = "260",
                          sliderInput(inputId = "dateInput", 
@@ -82,7 +82,7 @@ ui <- fluidPage(
                                      max = as.Date("2020-05-27","%Y-%m-%d"),
                                      value = as.Date("2020-04-29"), timeFormat="%Y-%m-%d", 
                                      step = 1,
-                                     animate = animationOptions(interval = 1800)),
+                                     animate = animationOptions(interval =500)),
                          selectInput("stat_mode",
                                      "You are interested in...",
                                      c( "Infection Rate","Mobility Index", "Risk Score"),
