@@ -150,7 +150,7 @@ lm.model2 = train(data = zip_daily_scaled2,
 ## model2 performace
 lm.model2$bestTune
 lm.model2$results # RMSE 3.337, R-sq 0.6414457
-
+lm.model2
 intercept = coef(lm.model2$finalModel,as.numeric(lm.model2$bestTune))[1]
 coef_scaled = coef(lm.model2$finalModel,as.numeric(lm.model2$bestTune))[-1]
 coef_name = names(coef(lm.model2$finalModel,as.numeric(lm.model2$bestTune)))[-1]
@@ -164,14 +164,20 @@ models <- zip_daily_scaled2 %>%
   select(c(ave_new7_10after,coef_name)) %>%
   do(data.frame(tidy(lm(ave_new7_10after ~ ., data = .),conf.int=T )))
 
+models$term[10:12] = c("retail_visit","grocery_pharmacy_visit","parks_visit")
+models = models[c(12:7,6:3,18:13,3:1),]
 
-#summary(lm.model2)
 ggplot(models, aes(x=estimate, y = term)) +
   geom_point() + geom_vline(xintercept = 0, colour="red") +
-  geom_errorbar(aes(xmin=conf.low, xmax=conf.high)) +
-  theme_minimal()
-# to-do:
-# box plot of coefficients
+  geom_errorbar(aes(xmin=conf.low, xmax=conf.high), size=0.1, width = 0.3) +
+  scale_y_discrete(limits=models$term)+
+  theme_minimal() + xlab("coefficient estimate") + ylab("predictor") +
+  theme(axis.text = element_text(size=rel(1.2)))
+
+ggplot(varImp(lm.model2), aes(x=Overall)) + geom_col() +
+  theme_minimal() + xlab("Predictor") +
+  theme(axis.text.y=element_text(size =rel(1.2)))
+
 # features order: mobility, case count, social economic
 y_yhat = data.frame(predict_case=predict(lm.model2), true_case=zip_daily_scaled2$ave_new7_10after)
 ggplot(y_yhat, aes(x=predict_case,y=true_case)) +
@@ -179,4 +185,4 @@ ggplot(y_yhat, aes(x=predict_case,y=true_case)) +
   coord_fixed(ratio = 1) +
   theme_minimal()
 # write csv file for other model use
-#write.csv(zip_daily2,"zipcode_daily_with_1_11_future_day_case_count.csv")
+# write.csv(zip_daily2,"zipcode_daily_with_1_11_future_day_case_count.csv")
