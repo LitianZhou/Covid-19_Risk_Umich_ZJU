@@ -1,7 +1,10 @@
-# county level lm
-# conclusion here: Totally not work as zip-code level. The new_n_day featuers
+# County level linear model
+# Author: Litian Zhou
+# Date: 6/1/2020
+# Conclusion: Aborted.
+# Reason: Totally not work as zip-code level. The new_n_day featuers
 # not significant at all. Oddly, only the "confirmed case is significant, and
-# alone contribute R-square
+# alone contributes R-square.
 
 library(dplyr)
 library(caret)
