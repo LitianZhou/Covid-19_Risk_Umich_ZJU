@@ -101,7 +101,7 @@ ui <- fluidPage(
                        h5("Risk score: "),
                        " LSTM model outcome * 1000",
                        h5("Mobility index: "),
-                       "(median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600,000",
+                       "(median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600,000"
                    )
                  ),
                  mainPanel(
@@ -199,12 +199,7 @@ server <- function(input, output) {
         showZipcodePopup(event$id, event$lat, event$lng)
       })
     })
-<<<<<<< HEAD
-    
-=======
-  
 
->>>>>>> ee95f43a35e92412f7bf22aa467f90903593e545
     #trend plot: return trend plot by zipcode entered
     output$trend_plot_by_county = renderPlotly({
       trend_input <- trend %>% filter(ZIP == input$zipID)
