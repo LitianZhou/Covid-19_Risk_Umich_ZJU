@@ -9,6 +9,7 @@ library(lubridate)
 library(tigris)
 library(DT)
 library(readxl)
+library(tidyr)
 COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
 
 zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.csv")
@@ -24,10 +25,11 @@ risk_scores_table <- read_csv("risk_score/daily_predict_4_day_avg_risk.csv")
 #data cleaning
 #get combined table for the three trend plot variables 
 infect_rate_by_zip <- zipcode_daily_income %>% transmute(value = confirmed_cases/population * 10000, date, ZIP, type = "Infection Rate")
-risk_scores <- risk_scores_table %>%  transmute(value = `cases/10000 population` * 1000, date=`date_start - date_end`, ZIP, type = "Risk Score")
+risk_scores <- risk_scores_table %>%  separate(`date_start - date_end`, c("date","discard"), sep = ' - ') %>% transmute(value = `cases/10000 population`, date, ZIP, type = "Risk Score")
 mobility_indices <- zipcode_daily_income %>% transmute(ZIP, date, type = "Mobility Index", value = (median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600000) 
 joined_df <- rbind(infect_rate_by_zip, risk_scores)
 trend <- rbind(joined_df, mobility_indices) 
+
 #convert the date column to date object and arrange by date order
 trend$date <- ymd(trend$date)
 arrange(trend, date)
@@ -39,8 +41,8 @@ trend$value <- round(trend$value, digits = 3)
 infect_result <- infect_rate_by_zip %>% select(-type) %>% rename(Infection_Rate = value)
 risk_result <- risk_scores %>% select(-type) %>% rename(Risk_Score = value)
 mobility_result <- mobility_indices %>% select(-type) %>% rename(Mobility_Index = value)
-result_data_table <- merge(infect_result, mobility_result)
-result_data_table <- merge(result_data_table, risk_result)
+temp <- merge(infect_result, mobility_result, all=TRUE)
+result_data_table <- merge(temp, risk_result, all=TRUE)
 
 
 # char_zips <- zctas(cb = TRUE, starts_with = c("90","91","92"))
@@ -67,7 +69,7 @@ ui <- fluidPage(
                                    width = "330", height = "400",
                          sliderInput(inputId = "dateInput", 
                                      label = "Select Date: ",
-                                     min = as.Date("2020-03-15","%Y-%m-%d"),
+                                     min = as.Date("2020-03-16","%Y-%m-%d"),
                                      max = as.Date("2020-05-27","%Y-%m-%d"),
                                      value = as.Date("2020-04-29"), timeFormat="%Y-%m-%d", 
                                      step = 1,
@@ -111,7 +113,7 @@ ui <- fluidPage(
                  # controls to select a data set and spcify the number of observations to view
                  sidebarPanel(
                    selectInput("dataset","Choose a dataset:",
-                               choices = c("zip_test")
+                               choices = c("Data Table")
                                ),
                    numericInput("obs", "Number of observations to view:", 10)
                  ),
@@ -155,7 +157,7 @@ server <- function(input, output) {
     # Return the requested dataset
     datasetInput <- reactive({
       switch(input$dataset,
-             "zip_test" = result_data_table
+             "Data Table" = result_data_table
              )
     })
     # Generate a summary of the dataset
@@ -197,18 +199,10 @@ server <- function(input, output) {
         showZipcodePopup(event$id, event$lat, event$lng)
       })
     })
-  
-    # output$hist = renderPlotly({
-    #   ggplotly(
-    #     ggplot2::ggplot(data = COVID19_by_Neighborhood)+
-    #       geom_histogram(aes(x=cases), binwidth=30) +
-    #       theme_classic()
-    #   )
-    # })
     
     #trend plot: return trend plot by zipcode entered
     output$trend_plot_by_county = renderPlotly({
-      trend_input <- trend %>% filter(ZIP == input$zipID) 
+      trend_input <- trend %>% filter(ZIP == input$zipID)
       ggplotly(
           ggplot2::ggplot(data = trend_input, aes(x=date, y=value, color=type)) +
           geom_line() +
@@ -246,15 +240,14 @@ server <- function(input, output) {
         rc1 <- colorRampPalette(colors = c("green", "white"), space = "Lab", bias = 1)(110)
         rc2 <- colorRampPalette(colors = c("white", "red"), space = "Lab", bias = 1)(100)
         palette_in = c(rc1, rc2)
-      } else {
+      } else { #Risk Score
         trend_date <- trend_date %>% mutate(value_integer = trunc(value))
-        domain_in = c(-12:200)
-        rc1 <- colorRampPalette(colors = c("green", "white"), space = "Lab", bias = 1)(12)
-        rc2 <- colorRampPalette(colors = c("white", "red"), space = "Lab", bias = 1)(200)
+        domain_in = c(-20:70)
+        rc1 <- colorRampPalette(colors = c("green", "white"), space = "Lab", bias = 1)(20)
+        rc2 <- colorRampPalette(colors = c("white", "red"), space = "Lab", bias = 1)(70)
         palette_in = c(rc1, rc2)
         
       }
-      
       
       char_zips <- geo_join(char_zips, 
                             trend_date, 
@@ -291,7 +284,8 @@ server <- function(input, output) {
                                                  bringToFront = TRUE),label = labels) %>%
 
         addLegend(pal = pal,
-                  values = ~(min(value_integer):max(value_integer)),
+                  #values = ~(min(value_integer):max(value_integer)),
+                  values = ~(value_integer),
                   opacity = 0.7,
                   labFormat = labelFormat(
                       transform = function(x) {if (stat_type == "Infection Rate"){exp(x) + 1} else {x}}
@@ -318,7 +312,11 @@ server <- function(input, output) {
       trend_filtered <- trend %>% filter(date == as.Date("2020-05-01"), type == "Infection Rate", ZIP == "90001")
       
       trend_risk <- trend %>% filter(type == "Risk Score") %>% mutate(value_log = log1p(value))
-      trend_infect
+      #risk_result
+      #mobility_result
+      #infect_result
+      result_data_table
+      #temp
     })
 
 }
