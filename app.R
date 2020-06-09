@@ -18,13 +18,13 @@ zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.cs
 #zipcode_daily_income <- read_excel("data/zipcode_daily_cases&social-distance&population&income.xlsx")
 zipcode_daily_income <- read_csv("data/zipcode_daily_cases&social-distance&population&income.csv") 
 places_totals <- read_csv("data/latimes-place-totals.csv")
-risk_scores_table <- read_csv("data/risk_score.csv")
+risk_scores_table <- read_csv("risk_score/daily_predict_4_day_avg_risk.csv")
 
 
 #data cleaning
 #get combined table for the three trend plot variables 
 infect_rate_by_zip <- zipcode_daily_income %>% transmute(value = confirmed_cases/population * 10000, date, ZIP, type = "Infection Rate")
-risk_scores <- risk_scores_table %>%  transmute(value = value * 1000, date, ZIP, type = "Risk Score")
+risk_scores <- risk_scores_table %>%  transmute(value = `cases/10000 population` * 1000, date=`date_start - date_end`, ZIP, type = "Risk Score")
 mobility_indices <- zipcode_daily_income %>% transmute(ZIP, date, type = "Mobility Index", value = (median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600000) 
 joined_df <- rbind(infect_rate_by_zip, risk_scores)
 trend <- rbind(joined_df, mobility_indices) 
