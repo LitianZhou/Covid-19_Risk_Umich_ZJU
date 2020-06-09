@@ -23,7 +23,7 @@ risk_scores_table <- read_csv("data/risk_score.csv")
 
 #data cleaning
 #get combined table for the three trend plot variables 
-infect_rate_by_zip <- zipcode_daily_income %>% transmute(value = new_confirmed_cases/population * 100000, date, ZIP, type = "Infection Rate")
+infect_rate_by_zip <- zipcode_daily_income %>% transmute(value = confirmed_cases/population * 10000, date, ZIP, type = "Infection Rate")
 risk_scores <- risk_scores_table %>%  transmute(value = value * 1000, date, ZIP, type = "Risk Score")
 mobility_indices <- zipcode_daily_income %>% transmute(ZIP, date, type = "Mobility Index", value = (median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600000) 
 joined_df <- rbind(infect_rate_by_zip, risk_scores)
