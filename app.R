@@ -32,6 +32,9 @@ trend <- rbind(joined_df, mobility_indices)
 trend$date <- ymd(trend$date)
 arrange(trend, date)
 
+#round all values to 3 decimal digits
+trend$value <- round(trend$value, digits = 3)
+
 #create result data table
 infect_result <- infect_rate_by_zip %>% select(-type) %>% rename(Infection_Rate = value)
 risk_result <- risk_scores %>% select(-type) %>% rename(Risk_Score = value)
@@ -195,12 +198,20 @@ server <- function(input, output) {
       })
     })
   
+    # output$hist = renderPlotly({
+    #   ggplotly(
+    #     ggplot2::ggplot(data = COVID19_by_Neighborhood)+
+    #       geom_histogram(aes(x=cases), binwidth=30) +
+    #       theme_classic()
+    #   )
+    # })
+    
     #trend plot: return trend plot by zipcode entered
     output$trend_plot_by_county = renderPlotly({
       trend_input <- trend %>% filter(ZIP == input$zipID) 
       ggplotly(
-          ggplot(data = trend_input, aes(x=date, y=value, color=type)) +
-          geom_line(linetype = a) +
+          ggplot2::ggplot(data = trend_input, aes(x=date, y=value, color=type)) +
+          geom_line() +
           geom_smooth(se = FALSE, linetype = "dashed") + 
           theme_classic()
       )
@@ -294,11 +305,6 @@ server <- function(input, output) {
     output$stat_output = renderText({
       trend_filtered <- trend %>% filter(date == input$dateInput, type == input$stat_mode, ZIP == input$zip_search) %>% select(value)
       paste("On date ", input$dateInput," the ", input$stat_mode, " at ZIP ", input$zip_search, " is ", trend_filtered)
-      # if (trend_filtered == numeric(0)){
-      #   paste("Known.")
-      # } else {
-      #   paste(trend_filtered)
-      # }
       })
     
     #raw data table: test purposes
@@ -312,7 +318,7 @@ server <- function(input, output) {
       trend_filtered <- trend %>% filter(date == as.Date("2020-05-01"), type == "Infection Rate", ZIP == "90001")
       
       trend_risk <- trend %>% filter(type == "Risk Score") %>% mutate(value_log = log1p(value))
-      trend
+      trend_infect
     })
 
 }
