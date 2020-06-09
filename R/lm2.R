@@ -5,7 +5,7 @@
 # Reason: The R-square is 0.63 and coefficients are meaningful to draw insights.
 
 # Model2, predict new cases b/ day t and day t+3 (risk score for risk window)
-zip_daily = read.csv("~/Downloads/MDP_summer/Covid-19_Risk_Umich_ZJU/data/zipcode_daily_with_1_11_future_day_case_count.csv")
+zip_daily = read.csv("data/Covid-19_Risk_Umich_ZJU/data/zipcode_daily_with_1_11_future_day_case_count.csv")
 zip_daily2 = as.data.frame(zip_daily)
 
 # predict average case of the risk window

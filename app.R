@@ -198,14 +198,7 @@ server <- function(input, output) {
       })
     })
   
-    # output$hist = renderPlotly({
-    #   ggplotly(
-    #     ggplot2::ggplot(data = COVID19_by_Neighborhood)+
-    #       geom_histogram(aes(x=cases), binwidth=30) +
-    #       theme_classic()
-    #   )
-    # })
-    
+
     #trend plot: return trend plot by zipcode entered
     output$trend_plot_by_county = renderPlotly({
       trend_input <- trend %>% filter(ZIP == input$zipID) 
