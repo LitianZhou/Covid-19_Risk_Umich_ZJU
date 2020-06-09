@@ -54,7 +54,7 @@ result_data_table <- merge(temp, risk_result, all=TRUE)
 ui <- fluidPage(
     includeCSS("styles.css"),
     titlePanel(
-      h1("Covid-19 Risk Umich + ZJU")
+      h1("COVID-19 Risk Scoring in Los Angeles County")
       ),
     tabsetPanel(
         tabPanel("Map by Statistics",
@@ -101,7 +101,7 @@ ui <- fluidPage(
                        h5("Risk score: "),
                        " LSTM model outcome * 1000",
                        h5("Mobility index: "),
-                       "(median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600,000",
+                       "(median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600,000"
                    )
                  ),
                  mainPanel(
@@ -199,12 +199,7 @@ server <- function(input, output) {
         showZipcodePopup(event$id, event$lat, event$lng)
       })
     })
-<<<<<<< HEAD
     
-=======
-  
-
->>>>>>> ee95f43a35e92412f7bf22aa467f90903593e545
     #trend plot: return trend plot by zipcode entered
     output$trend_plot_by_county = renderPlotly({
       trend_input <- trend %>% filter(ZIP == input$zipID)
@@ -247,9 +242,9 @@ server <- function(input, output) {
         palette_in = c(rc1, rc2)
       } else { #Risk Score
         trend_date <- trend_date %>% mutate(value_integer = trunc(value))
-        domain_in = c(-20:70)
+        domain_in = c(-20:7)
         rc1 <- colorRampPalette(colors = c("green", "white"), space = "Lab", bias = 1)(20)
-        rc2 <- colorRampPalette(colors = c("white", "red"), space = "Lab", bias = 1)(70)
+        rc2 <- colorRampPalette(colors = c("white", "red"), space = "Lab", bias = 1)(7)
         palette_in = c(rc1, rc2)
         
       }
