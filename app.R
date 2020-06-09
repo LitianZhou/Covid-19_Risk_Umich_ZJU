@@ -58,10 +58,9 @@ ui <- fluidPage(
       ),
     tabsetPanel(
         tabPanel("Map by Statistics",
-
-                 HTML("<button type='button' class='btn btn-danger' data-toggle='collapse' data-target='#demo'>Date Selector</button>"),
+                 HTML("<button type='button' class='btn-danger' data-toggle='collapse' data-target='#demo'>Selector</button>"),
                  leafletOutput("map_stat",width = "100%", height = 700),
-                 div(id = "demo", class = "collapse in", 
+                 div(id = "demo", class = "collapse", 
                      absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
                                    draggable = TRUE, top = "170", left = "100", 
 
@@ -94,26 +93,17 @@ ui <- fluidPage(
                                "locate at ...",
                                unique(risk_scores_table$ZIP),
                                multiple = F),
-                   HTML("<button type='button' class='btn btn-danger' data-toggle='collapse' data-target='#explain'>Statistics Details</button>"),
-                   div(id = "explain", class = "collapse", 
-                       h5("Infection rate: "),
-                       "daily new confirmed cases /population * 100000 (number of daily new confirmed cases per 100,000 population at the county level)",
-                       h5("Risk score: "),
-                       " LSTM model outcome * 1000",
-                       h5("Mobility index: "),
-                       "(median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600,000"
-                   )
                  ),
                  mainPanel(
                    plotly::plotlyOutput("trend_plot_by_county", height = 800)
                  )
         ),
         # a new kind of tab to show
-        tabPanel("Result Data Table",
+        tabPanel("Raw Data Table",
                  # controls to select a data set and spcify the number of observations to view
                  sidebarPanel(
                    selectInput("dataset","Choose a dataset:",
-                               choices = c("Data Table")
+                               choices = c("Data Table Statistics", "Risk Score Prediction")
                                ),
                    numericInput("obs", "Number of observations to view:", 10)
                  ),
@@ -123,9 +113,24 @@ ui <- fluidPage(
                    tableOutput("view")
                  )
         ),
-        tabPanel("Raw Data Table",
-                 DT::dataTableOutput("rawData")
-        )
+        tabPanel("Result Data Table",
+                 sidebarPanel(
+                 numericInput("num", "Number of observations to view:", 10),
+                 HTML("<button type='button' class='btn btn-danger' data-toggle='collapse' data-target='#explain'>Statistics Details</button>"),
+                 div(id = "explain", class = "collapse", 
+                     h5("Infection rate: "),
+                     "total confirmed cases /population * 10,000 (number of total confirmed cases per 10,000 population at the zip code level updated daily)",
+                     h5("Risk score: "),
+                     " LSTM model outcome: prediction of number of new confirmed cases per 10,000 population, with a four days window",
+                     h5("Mobility index: "),
+                     "(median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600,000"
+                 )
+                 ),
+                 mainPanel(
+                   tableOutput("result_data")
+                 )
+                 
+                 )
     )
 )
 
@@ -153,11 +158,12 @@ server <- function(input, output) {
                           how = "left")
     
     # new raw_data table
-    places_totals2 <- places_totals %>% select(date:new_confirmed_cases)
+    #places_totals2 <- places_totals %>% select(date:new_confirmed_cases)
     # Return the requested dataset
     datasetInput <- reactive({
       switch(input$dataset,
-             "Data Table" = result_data_table
+             "Data Table Statistics" = zipcode_daily_income,
+             "Risk Score Prediction" = risk_scores_table
              )
     })
     # Generate a summary of the dataset
@@ -170,6 +176,25 @@ server <- function(input, output) {
       head(datasetInput(), n = input$obs)
     })
     
+    
+    
+    
+    ######render result data table
+  
+    # new raw_data table
+    # input$filter
+    # input$date_search
+    # input$zip_search
+    # filter_input <- reactive({
+    #   switch(input$filter,
+    #          "ZIP" = zip,
+    #          "date" = date
+    #   )
+    # })
+    
+    output$result_data <- renderTable({
+      head(result_data_table, n = input$num)
+    })
     
     
     # 2.show a pop-up when the mouse hover over a zipcode, 
@@ -315,7 +340,7 @@ server <- function(input, output) {
       #risk_result
       #mobility_result
       #infect_result
-      result_data_table
+      zipcode_daily_income
       #temp
     })
 
