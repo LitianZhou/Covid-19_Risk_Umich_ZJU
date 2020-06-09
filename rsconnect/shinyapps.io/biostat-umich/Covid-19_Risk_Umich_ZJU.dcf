@@ -5,8 +5,8 @@ account: biostat-umich
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2369011
-bundleId: 3245446
+bundleId: 3245768
 url: https://biostat-umich.shinyapps.io/Covid-19_Risk_Umich_ZJU/
-when: 1591670982.15413
+when: 1591679504.11934
 asMultiple: FALSE
 asStatic: FALSE
