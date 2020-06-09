@@ -4,5 +4,4 @@ packrat/lib*/
 .Rprofile
 .Rhistory
 .Rapp.history
-*.py
 credentials.json
