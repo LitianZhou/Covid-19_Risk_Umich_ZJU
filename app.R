@@ -10,13 +10,14 @@ library(tigris)
 library(DT)
 library(readxl)
 library(tidyr)
+library(scales)
 COVID19_by_Neighborhood <- read.csv("data/COVID19_by_Neighborhood.csv")
 
 zipcode_daily <- read_csv("data/zipcode_daily_with_1_11_future_day_case_count.csv")
 
 # some new datasets, might be helpful
 # when I show the .xlsx dataset, there are something wrong with the date, so I change the xlsx file into .csv file
-#zipcode_daily_income <- read_excel("data/zipcode_daily_cases&social-distance&population&income.xlsx")
+# zipcode_daily_income <- read_excel("data/zipcode_daily_cases&social-distance&population&income.xlsx")
 zipcode_daily_income <- read_csv("data/zipcode_daily_cases&social-distance&population&income.csv") 
 places_totals <- read_csv("data/latimes-place-totals.csv")
 risk_scores_table <- read_csv("risk_score/daily_predict_4_day_avg_risk.csv")
@@ -26,9 +27,12 @@ risk_scores_table <- read_csv("risk_score/daily_predict_4_day_avg_risk.csv")
 #get combined table for the three trend plot variables 
 infect_rate_by_zip <- zipcode_daily_income %>% transmute(value = confirmed_cases/population * 10000, date, ZIP, type = "Infection Rate")
 risk_scores <- risk_scores_table %>%  separate(`date_start - date_end`, c("date","discard"), sep = ' - ') %>% transmute(value = `cases/10000 population`, date, ZIP, type = "Risk Score")
+risk_scores_0_100 <- risk_scores
+risk_scores_0_100$value = rescale(risk_scores$value, to = c(1,100))
 mobility_indices <- zipcode_daily_income %>% transmute(ZIP, date, type = "Mobility Index", value = (median_home_dwell_time - median_non_home_dwell_time) * distance_traveled_from_home / 600000) 
 joined_df <- rbind(infect_rate_by_zip, risk_scores)
-trend <- rbind(joined_df, mobility_indices) 
+trend <- rbind(joined_df, mobility_indices)
+#trend <- rbind(trend, risk_scores_0_100)
 
 #convert the date column to date object and arrange by date order
 trend$date <- ymd(trend$date)
