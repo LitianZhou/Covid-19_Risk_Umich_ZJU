@@ -11,7 +11,8 @@ library(caret)
 library(ggplot2)
 library(lubridate)
 
-county_daily <- read.csv("data/Covid-19_Risk_Umich_ZJU/data/county_daily_mobility.csv")
+# You need to set working directory to the source file location first
+county_daily <- read_excel("data/county_daily.xlsx")
 county_daily$date = as_date(county_daily$date)
 county_daily$stay_home_ratio = county_daily$completely_home_device_count/county_daily$device_count
 
